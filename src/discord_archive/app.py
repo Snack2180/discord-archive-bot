@@ -305,6 +305,7 @@ def main():
     parser.add_argument('--config', type=Path, default=Path('config.toml'))
     parser.add_argument('--check', action='store_true', help='Check config/dependencies without connecting')
     args = parser.parse_args()
+    stage = 'configuration'
     try:
         cfg = load_config(args.config)
         if args.check:
@@ -313,17 +314,31 @@ def main():
                 print(f'{module}: ' + ('installed' if importlib.util.find_spec(module) else 'missing'))
             print('Local learning / text / DOCX: Python standard library')
             return
+        stage = 'token input'
         secret = token()
+        stage = 'instance lock'
         with InstanceLock(cfg.data_dir / 'bot.lock'):
+            stage = 'database'
             store = Store(cfg.data_dir / 'archive.sqlite')
             try:
+                stage = 'bot initialization'
                 bot = build_bot(cfg, store)
+                stage = 'Discord connection'
                 bot.run(secret, log_level=logging.WARNING)
             finally:
                 store.close()
     except (ValueError, OSError, ImportError) as exc:
         # Never print config payload, environment variables, or secret-bearing exception bodies.
-        print(f'Startup failed ({type(exc).__name__}). Check config, dependencies and local token setup.')
+        print(f'Startup failed ({type(exc).__name__}; stage: {stage}).')
+        hints = {
+            'configuration': 'Check config.toml IDs and settings.',
+            'token input': 'Bot token input was empty. Run scripts/start.ps1 and paste the token at its hidden prompt.',
+            'instance lock': 'Check whether another bot instance is already running with the same data directory.',
+            'database': 'Check the data directory and database file access.',
+            'bot initialization': 'Offline bot initialization failed. Report this stage without sharing your token.',
+            'Discord connection': 'Discord startup failed. Report this stage without sharing your token.',
+        }
+        print(hints[stage])
         raise SystemExit(1)
 
 
