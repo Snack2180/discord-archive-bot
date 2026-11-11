@@ -66,3 +66,15 @@ class RuntimeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.store.job('2')['state'], 'review_pending')
         self.assertEqual(persistent_reviews(self.store), [('2', '999')])
 
+    def test_restart_unlocks_only_known_presend_file_error(self):
+        known = "게시 결과 불확실: 'File' object does not support the context manager protocol"
+        for job_id, receipt, error in [('2','',known), ('3','', '게시 결과 불확실: timeout'), ('4','{"message_ids":["100"]}',known)]:
+            self.store.upsert_item(Item(job_id,job_id,'30','owner','','메모'))
+            self.store.create_job(job_id)
+            self.store.update_job(job_id,state='review_pending',receipt=receipt,error=error)
+        Runtime(self.store, self.g, Path(self.tmp.name))
+        self.assertEqual(self.store.job('2')['error'], '')
+        self.assertEqual(self.store.job('2')['state'], 'review_pending')
+        self.assertEqual(self.store.job('3')['error'], '게시 결과 불확실: timeout')
+        self.assertEqual(self.store.job('4')['error'], known)
+
