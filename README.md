@@ -47,6 +47,8 @@ Copy-Item -LiteralPath config.example.toml -Destination config.toml
 .\scripts\start.ps1
 ```
 
+숨김 입력창 붙여넣기가 동작하지 않으면 ` .\scripts\start.ps1 -ClipboardToken`을 실행하세요. 안내가 나온 **다음에** Discord에서 토큰만 복사하고, PowerShell로 돌아와 붙여넣기 없이 Enter만 누릅니다. 복사한 명령어가 토큰을 덮어쓰는 혼선을 피하고 클립보드 값을 로컬 환경 변수로 직접 읽습니다. 토큰은 화면에 출력하지 않습니다.
+
 실행 스크립트가 토큰을 가려서 입력받습니다. 토큰은 로컬 환경 변수에만 넣고 종료 시 제거합니다. **토큰을 채팅이나 Git에 올리지 마세요.** `.env.example`은 설명용이며 자동 로딩하지 않습니다.
 
 PowerShell 정책 때문에 스크립트 실행이 막히면 시스템 정책을 변경하지 않고 다음처럼 실행할 수 있습니다.
