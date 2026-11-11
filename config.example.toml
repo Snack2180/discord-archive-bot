@@ -1,0 +1,12 @@
+# Discord developer mode: right-click server/user/channel -> Copy ID.
+guild_id = "111111111111111111"
+owner_id = "222222222222222222"
+inbox_id = "333333333333333333"
+review_id = "444444444444444444"
+channel_ids = ["555555555555555555", "666666666666666666"]
+data_dir = "data"
+max_file_bytes = 26214400
+max_storage_bytes = 5368709120
+poll_seconds = 60
+# First run preserves inbox originals. Enable only after checking live archive verification.
+delete_inbox = false
