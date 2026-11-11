@@ -140,8 +140,11 @@ class DiscordGateway:
         ids, hashes = [], []
         for i, (path, name, digest) in enumerate(files):
             header = f'{self.marker(job_id, i, len(files))}\n{item.title[:100]}\n태그: {", ".join(item.tags)[:300]}\n원작성자: {item.author_id} · {item.created_at}\n{item.source_url}\n{item.body[:700]}'
-            with discord.File(path, filename=name) as upload:
+            upload = discord.File(path, filename=name)
+            try:
                 msg = await channel.send(header[:1900], file=upload, allowed_mentions=discord.AllowedMentions.none())
+            finally:
+                upload.close()
             ids.append(str(msg.id))
             hashes.append(digest)
             # Persist each successful send before another network operation.
