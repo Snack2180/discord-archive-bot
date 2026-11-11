@@ -13,6 +13,13 @@ class Runtime:
         self.model_path = data_dir / 'models' / 'current.json'
         self.model = load_model(self.model_path)
         self.lock = asyncio.Lock()
+        # v0.1 File context-manager failure happened before channel.send, so no
+        # publication exists when there is also no persisted receipt. Unlock
+        # only this exact historical error; keep real network ambiguity gated.
+        known_unsent = "게시 결과 불확실: 'File' object does not support the context manager protocol"
+        for job in self.store.jobs({'review_pending'}):
+            if not job['receipt'] and job['error'] == known_unsent:
+                self.store.update_job(job['id'], error='')
 
     def retrain(self):
         version = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%f')
