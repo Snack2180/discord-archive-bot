@@ -5,7 +5,7 @@ import importlib.util
 import json
 import logging
 from pathlib import Path
-from .config import load_config, token
+from .config import load_config, token, TokenInputError
 from .store import Store
 from .runtime import Runtime
 from .discord_gateway import DiscordGateway
@@ -330,6 +330,10 @@ def main():
     except (ValueError, OSError, ImportError) as exc:
         # Never print config payload, environment variables, or secret-bearing exception bodies.
         print(f'Startup failed ({type(exc).__name__}; stage: {stage}).')
+        # Code locations only: omit exception messages, source lines, arguments and locals.
+        import traceback
+        frames = traceback.extract_tb(exc.__traceback__)[-4:]
+        print('Location: ' + ' -> '.join(f'{Path(f.filename).name}:{f.lineno}:{f.name}' for f in frames))
         hints = {
             'configuration': 'Check config.toml IDs and settings.',
             'token input': 'Bot token input was empty. Run scripts/start.ps1 and paste the token at its hidden prompt.',
@@ -338,7 +342,15 @@ def main():
             'bot initialization': 'Offline bot initialization failed. Report this stage without sharing your token.',
             'Discord connection': 'Discord startup failed. Report this stage without sharing your token.',
         }
-        print(hints[stage])
+        if isinstance(exc, TokenInputError):
+            token_hints = {
+                'empty': hints['token input'],
+                'line_break': 'Bot token contains an internal line break. Copy only the token with the Discord Copy button and enter it again as one line.',
+                'invalid_character': 'Bot token contains whitespace or unsupported characters. Copy only the token, without labels or other text.',
+            }
+            print(token_hints[exc.reason])
+        else:
+            print(hints[stage])
         raise SystemExit(1)
 
 
