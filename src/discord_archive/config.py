@@ -41,8 +41,19 @@ def load_config(path: Path) -> Config:
     return cfg
 
 
+class TokenInputError(ValueError):
+    """Safe reason code only; never retain the supplied credential in an error."""
+    def __init__(self, reason: str):
+        self.reason = reason
+        super().__init__(reason)
+
+
 def token() -> str:
     value = os.environ.get('DISCORD_BOT_TOKEN', '').strip()
     if not value:
-        raise ValueError('Set DISCORD_BOT_TOKEN locally before starting')
+        raise TokenInputError('empty')
+    if '\r' in value or '\n' in value:
+        raise TokenInputError('line_break')
+    if any(not ('!' <= char <= '~') for char in value):
+        raise TokenInputError('invalid_character')
     return value
